@@ -29,7 +29,13 @@ const num_odd_parity = ref(0);
 const even_parity_pos = ref([]);
 const odd_parity_pos = ref([]);
 
-const card_format = ref({});
+const card_format = ref({
+    convertion: 0,
+    cardlen: num_card_bit.value,
+    oddparity_pos: [],
+    evenparity_pos: [],
+    cardcode: []
+});
 
 function map_index_to_site_pos(i) {
     let ret = cardsite_bit_pos_count_map_array.value.find(w => w[0] == i && w[2] == 1)
@@ -207,7 +213,13 @@ function on_reset_pressed(e) {
     cardsite_bit_pos_count_map_array.value = [];
     even_parity_bit_mask_pos.value.forEach((_) => []);
     odd_parity_bit_mask_pos.value.forEach((_) => []);
-    card_format.value = {};
+    card_format.value = {
+        convertion: 0,
+        cardlen: num_card_bit.value,
+        oddparity_pos: [],
+        evenparity_pos: [],
+        cardcode: []
+    };
 }
 
 function generate_card_format_json(e) {
@@ -301,6 +313,15 @@ function on_odd_parity_pos_change(e, j) {
     odd_parity_pos.value[j - 1] = Number(e.target.value);
 }
 
+function on_site_code_click() {
+    sitecode_enabled.value = !sitecode_enabled.value;
+    if (sitecode_enabled.value) {
+        card_format.value['convertion'] = 1;
+    } else {
+        card_format.value['convertion'] = 2;
+    }
+}
+
 </script>
 
 <template>
@@ -312,7 +333,7 @@ function on_odd_parity_pos_change(e, j) {
         </div>
         <div>
             <label>Enable facility code</label>
-            <input type="checkbox" @click="sitecode_enabled = !sitecode_enabled" :chekced="sitecode_enabled" />
+            <input type="checkbox" @click="on_site_code_click" v-model="sitecode_enabled" />
         </div>
     </div>
 
