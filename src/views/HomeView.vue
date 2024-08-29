@@ -231,13 +231,10 @@ function generate_card_format_json(e) {
     const E_WIEG_BIT_ODD_PAR_MSK_1 = 32;
     const E_WIEG_BIT_ODD_PAR_MSK_2 = 64;
     const E_WIEG_BIT_ODD_PAR_MSK_3 = 128;
-    card_format.value = {
-        cardcode: [],
-        evenparity_pos: even_parity_pos.value,
-        oddparity_pos: odd_parity_pos.value,
-        cardlen: 0,
-        convertion: 0
-    }
+    card_format.value.evenparity_pos = even_parity_pos.value;
+    card_format.value.oddparity_pos = odd_parity_pos.value;
+    card_format.value.cardcode = [];
+    card_format.value.cardlen = card_bit_count.value;
     // todo :: validate first
     for (let i = 1; i <= num_card_bit.value; i++) {
         let type = 0;
