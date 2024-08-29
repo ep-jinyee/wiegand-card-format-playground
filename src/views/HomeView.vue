@@ -354,22 +354,15 @@ function on_site_code_click() {
         </div>
     </div>
 
-    <div
-        style="display:flex; flex-direction: row; justify-content: space-around; align-items: center; margin-bottom: 1rem;">
-        <div>
-            <button
-                style="padding: 1rem; background-color: rgb(249,149,149); border: 0; box-shadow: 1px 1px 1px rgba(140,140,140); border-radius: 10px"
-                @click="on_reset_pressed">Reset</button>
-        </div>
-        <div>
-            <button
-                style="padding: 1rem; background-color: rgb(149,249,149); border: 0; box-shadow: 1px 1px 1px rgba(140,140,140); border-radius: 10px"
-                @click="generate_card_format_json">Generate Wiegand Format JSON</button>
-        </div>
-        <div>
-            <label>Debug mode</label>
-            <input type="checkbox" v-model="debug" />
-        </div>
+    <div style="margin-bottom: 1rem;">
+        <button
+            style="padding: 1rem; background-color: rgb(249,149,149); border: 0; box-shadow: 1px 1px 1px rgba(140,140,140); border-radius: 10px; display:inline-block; margin-right:10px"
+            @click="on_reset_pressed">Reset</button>
+        <button
+            style="padding: 1rem; background-color: rgb(149,249,149); border: 0; box-shadow: 1px 1px 1px rgba(140,140,140); border-radius: 10px; display:inline-block; margin-right:10px"
+            @click="generate_card_format_json">Generate Wiegand Format JSON</button>
+        <label>Debug mode</label>
+        <input type="checkbox" v-model="debug" />
     </div>
 
     <div>
