@@ -211,8 +211,8 @@ function on_reset_pressed(e) {
     card_bit_count_dustbin.value = [];
     site_bit_count_dustbin.value = [];
     cardsite_bit_pos_count_map_array.value = [];
-    even_parity_bit_mask_pos.value.forEach((_) => []);
-    odd_parity_bit_mask_pos.value.forEach((_) => []);
+    even_parity_bit_mask_pos.value = [[], [], []];
+    odd_parity_bit_mask_pos.value = [[], [], []];
     card_format.value = {
         convertion: 0,
         cardlen: num_card_bit.value,
@@ -325,8 +325,7 @@ function on_site_code_click() {
 </script>
 
 <template>
-    <div
-        style="display:flex; flex-direction: row; justify-content: space-around; align-items: center; margin-bottom: 1rem">
+    <div style=" margin-bottom: 1rem">
         <div>
             <label>Enter number of card bit:</label>
             <input type="number" v-model="num_card_bit" />
@@ -337,8 +336,7 @@ function on_site_code_click() {
         </div>
     </div>
 
-    <div
-        style="display:flex; flex-direction: row; justify-content: space-around; align-items: center;margin-bottom: 1rem;">
+    <div style="margin-bottom: 1rem;">
         <div>
             <label>Add even parity code</label>
             <button @click="num_even_parity--" :disabled="num_even_parity == 0">-</button>
@@ -362,17 +360,31 @@ function on_site_code_click() {
     <div
         style="display:flex; flex-direction: row; justify-content: space-around; align-items: center; margin-bottom: 1rem;">
         <div>
-
-            <button @click="generate_card_format_json">Generate Wiegand Format JSON</button>
+            <button
+                style="padding: 1rem; background-color: rgb(249,149,149); border: 0; box-shadow: 1px 1px 1px rgba(140,140,140); border-radius: 10px"
+                @click="on_reset_pressed">Reset</button>
         </div>
         <div>
-            <button @click="on_reset_pressed">Reset</button>
+            <button
+                style="padding: 1rem; background-color: rgb(149,249,149); border: 0; box-shadow: 1px 1px 1px rgba(140,140,140); border-radius: 10px"
+                @click="generate_card_format_json">Generate Wiegand Format JSON</button>
         </div>
         <div>
             <label>Debug mode</label>
             <input type="checkbox" v-model="debug" />
         </div>
     </div>
+
+    <div>
+        For convertion type,
+        <ul>
+            <li>0 - undefined</li>
+            <li>1 - site code plus card code</li>
+            <li>2 - card code only</li>
+        </ul>
+        Program will automatically change convertion type to 1 if site code is enabled.
+    </div>
+
     <table>
         <thead>
             <tr style="height: 2rem">
@@ -432,9 +444,7 @@ function on_site_code_click() {
             </tr>
         </tbody>
     </table>
-    <div
-        style="display:flex; flex-direction: row; justify-content: space-around; align-items: center; margin-bottom: 1rem;">
-
+    <div style="margin-bottom: 1rem;">
         <div>
             <p>Card format</p>
             <pre>{{ card_format }}</pre>
@@ -459,9 +469,18 @@ function on_site_code_click() {
 table,
 th,
 td {
-    border: 1px solid;
+    border: 1px solid #4CAF50;
     transition: background-color 0.1s ease-in-out;
     user-select: none;
+}
+
+tr:nth-child(odd) td:nth-child(1) {
+    background-color: #4682b4;
+    color: white;
+}
+
+td {
+    height: 5rem;
 }
 
 table {
