@@ -369,8 +369,9 @@ function on_site_code_click() {
         For convertion type,
         <ul>
             <li>0 - undefined</li>
-            <li>1 - site code plus card code</li>
-            <li>2 - card code only</li>
+            <li>1 - site code plus card code. For Edge, the format is site code + card code, whereby only maximum 15
+                digit site code plus maximum 25 digit card code, total 40 digits</li>
+            <li>2 - card code only. For Edge, 16 bytes or max 39 digit</li>
         </ul>
         Program will automatically change convertion type to 1 if site code is enabled.
     </div>
