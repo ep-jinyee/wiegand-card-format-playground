@@ -30,7 +30,7 @@ const even_parity_pos = ref([]);
 const odd_parity_pos = ref([]);
 
 const card_format = ref({
-    convertion: 0,
+    convertion: 2,
     cardlen: num_card_bit.value,
     oddparity_pos: [],
     evenparity_pos: [],
@@ -214,7 +214,7 @@ function on_reset_pressed(e) {
     even_parity_bit_mask_pos.value = [[], [], []];
     odd_parity_bit_mask_pos.value = [[], [], []];
     card_format.value = {
-        convertion: 0,
+        convertion: 2,
         cardlen: num_card_bit.value,
         oddparity_pos: [],
         evenparity_pos: [],
