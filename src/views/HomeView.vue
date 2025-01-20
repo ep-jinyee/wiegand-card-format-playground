@@ -1,5 +1,16 @@
 <script setup>
-import { ref } from 'vue';
+import Big from 'big.js';
+import { ref, watch } from 'vue';
+
+const E_WIEG_BIT_CARD_BIT = 1;
+const E_WIEG_BIT_SITE_BIT = 2;
+const E_WIEG_BIT_EVEN_PAR_MSK_1 = 4;
+const E_WIEG_BIT_EVEN_PAR_MSK_2 = 8;
+const E_WIEG_BIT_EVEN_PAR_MSK_3 = 16;
+const E_WIEG_BIT_ODD_PAR_MSK_1 = 32;
+const E_WIEG_BIT_ODD_PAR_MSK_2 = 64;
+const E_WIEG_BIT_ODD_PAR_MSK_3 = 128;
+
 const debug = ref(false);
 const num_card_bit = ref(26);
 
@@ -29,6 +40,15 @@ const num_odd_parity = ref(0);
 const even_parity_pos = ref([]);
 const odd_parity_pos = ref([]);
 
+const num_sitecode_based_10_digits = ref(0);
+const num_cardcode_based_10_digits = ref(0);
+
+const max_num_sitecode_based_10_digits = ref(0);
+const max_num_cardcode_based_10_digits = ref(0);
+
+const max_sitecode_str = ref('0');
+const max_cardcode_str = ref('0');
+
 const card_format = ref({
     convertion: 2,
     cardlen: num_card_bit.value,
@@ -36,6 +56,8 @@ const card_format = ref({
     evenparity_pos: [],
     cardcode: []
 });
+
+const user_input_json_format = ref('');
 
 function map_index_to_site_pos(i) {
     let ret = cardsite_bit_pos_count_map_array.value.find(w => w[0] == i && w[2] == 1)
@@ -213,6 +235,13 @@ function on_reset_pressed(e) {
     cardsite_bit_pos_count_map_array.value = [];
     even_parity_bit_mask_pos.value = [[], [], []];
     odd_parity_bit_mask_pos.value = [[], [], []];
+    user_input_json_format.value = '';
+    num_cardcode_based_10_digits.value = 0;
+    num_sitecode_based_10_digits.value = 0;
+    max_num_cardcode_based_10_digits = 0;
+    max_cardcode_str = '0';
+    max_num_sitecode_based_10_digits = 0;
+    max_sitecode_str = '0';
     card_format.value = {
         convertion: 2,
         cardlen: num_card_bit.value,
@@ -223,14 +252,7 @@ function on_reset_pressed(e) {
 }
 
 function generate_card_format_json(e) {
-    const E_WIEG_BIT_CARD_BIT = 1;
-    const E_WIEG_BIT_SITE_BIT = 2;
-    const E_WIEG_BIT_EVEN_PAR_MSK_1 = 4;
-    const E_WIEG_BIT_EVEN_PAR_MSK_2 = 8;
-    const E_WIEG_BIT_EVEN_PAR_MSK_3 = 16;
-    const E_WIEG_BIT_ODD_PAR_MSK_1 = 32;
-    const E_WIEG_BIT_ODD_PAR_MSK_2 = 64;
-    const E_WIEG_BIT_ODD_PAR_MSK_3 = 128;
+
     card_format.value.evenparity_pos = even_parity_pos.value;
     card_format.value.oddparity_pos = odd_parity_pos.value;
     card_format.value.cardcode = [];
@@ -269,6 +291,7 @@ function generate_card_format_json(e) {
         }
     }
     card_format.value.cardlen = num_card_bit.value;
+    user_input_json_format.value = JSON.stringify(card_format.value, null, 2);
 }
 
 function on_even_parity_pos_change(e, j) {
@@ -319,6 +342,92 @@ function on_site_code_click() {
     }
 }
 
+function on_user_change_json_format() {
+    try {
+        let json = JSON.parse(user_input_json_format.value);
+
+        if (json.cardlen) {
+            num_card_bit.value = json.cardlen;
+        }
+
+        if (json.convertion) {
+            card_format.value.convertion = json.convertion;
+        }
+
+        if (json.oddparity_pos) {
+            odd_parity_pos.value = json.oddparity_pos;
+            num_odd_parity.value = json.oddparity_pos.filter(a => a != 255).length
+        }
+
+        if (json.evenparity_pos) {
+            even_parity_pos.value = json.evenparity_pos;
+            num_even_parity.value = json.evenparity_pos.filter(a => a != 255).length
+        }
+
+        if (json.cardcode) {
+            card_format.value.cardcode = json.cardcode;
+        }
+
+        // need to reverse engineer the card format and draw the card format on table
+        cardsite_bit_pos_count_map_array.value = [];
+
+        for (let i = 0; i < json.cardcode.length; i++) {
+            let type = json.cardcode[i] >> 8;
+            let pos = json.cardcode[i] & 0xff;
+            if (type & E_WIEG_BIT_CARD_BIT) {
+                card_bit_count.value = Math.max(card_bit_count.value, pos + 1);
+                cardsite_bit_pos_count_map_array.value.push([i + 1, pos + 1, 0]);
+            }
+            if (type & E_WIEG_BIT_SITE_BIT) {
+                site_bit_count.value = Math.max(site_bit_count.value, pos + 1);
+                cardsite_bit_pos_count_map_array.value.push([i + 1, pos + 1, 1]);
+            }
+            if (type & E_WIEG_BIT_EVEN_PAR_MSK_1) {
+                even_parity_bit_mask_pos.value[0].push(i + 1);
+            }
+            if (type & E_WIEG_BIT_EVEN_PAR_MSK_2) {
+                even_parity_bit_mask_pos.value[1].push(i + 1);
+            }
+            if (type & E_WIEG_BIT_EVEN_PAR_MSK_3) {
+                even_parity_bit_mask_pos.value[2].push(i + 1);
+            }
+            if (type & E_WIEG_BIT_ODD_PAR_MSK_1) {
+                odd_parity_bit_mask_pos.value[0].push(i + 1);
+            }
+            if (type & E_WIEG_BIT_ODD_PAR_MSK_2) {
+                odd_parity_bit_mask_pos.value[1].push(i + 1);
+            }
+            if (type & E_WIEG_BIT_ODD_PAR_MSK_3) {
+                odd_parity_bit_mask_pos.value[2].push(i + 1);
+            }
+        }
+
+        if (site_bit_count.value > 0) {
+            sitecode_enabled.value = true;
+        }
+
+        num_sitecode_based_10_digits.value = json.num_fc_digit || 0;
+        num_cardcode_based_10_digits.value = json.num_card_digit || 0;
+    } catch (e) {
+        console.log(e);
+    }
+}
+
+watch(() => site_bit_count.value, (newVal, oldVal) => {
+    let x = new Big(2);
+    let y = x.pow(newVal);
+    max_sitecode_str.value = y.minus(1).toString();
+    max_num_sitecode_based_10_digits.value = y.minus(1).toString().length;
+});
+
+watch(() => card_bit_count.value, (newVal, oldVal) => {
+    let x = new Big(2);
+    let y = x.pow(newVal);
+    max_cardcode_str.value = y.minus(1).toString();
+    max_num_cardcode_based_10_digits.value = y.minus(1).toString().length;
+});
+
+
 </script>
 
 <template>
@@ -331,6 +440,17 @@ function on_site_code_click() {
             <label>Enable facility code</label>
             <input type="checkbox" @click="on_site_code_click" v-model="sitecode_enabled" />
         </div>
+        <div v-if="sitecode_enabled">
+            <div>
+                <label>Number of Facility Code Digits (Based-10)</label>
+                <input type="number" v-model="num_sitecode_based_10_digits" />
+            </div>
+            <div>
+                <label>Number of Card Code Digits (Based-10)</label>
+                <input type="number" v-model="num_cardcode_based_10_digits" />
+            </div>
+        </div>
+
     </div>
 
     <div style="margin-bottom: 1rem;">
@@ -389,11 +509,15 @@ function on_site_code_click() {
             <tr v-if="sitecode_enabled">
                 <td>Site code<span style="font-weight:bold">:</span></td>
                 <template v-for="i of num_card_bit">
-                    <td class="bg-site-bit" :class="{ active: map_index_to_site_pos(i) }" style="width: 1.5rem"
-                        @mousedown="e => on_sitecode_cell_mousedown(e, i)"
+                    <td class="bg-site-bit" :class="{
+                        active: map_index_to_site_pos(i)
+                    }" style="width: 1.5rem" @mousedown="e => on_sitecode_cell_mousedown(e, i)"
                         @mouseup="(e) => on_sitecode_cell_mouseup(e, i)"
-                        @mouseleave="(e) => on_sitecode_cell_mouseleave(e, i)"><span>{{ map_index_to_site_pos(i)
-                            }}</span></td>
+                        @mouseleave="(e) => on_sitecode_cell_mouseleave(e, i)">
+                        <span>
+                            {{ map_index_to_site_pos(i) }}
+                        </span>
+                    </td>
                 </template>
             </tr>
             <tr>
@@ -435,24 +559,63 @@ function on_site_code_click() {
             </tr>
         </tbody>
     </table>
-    <div style="margin-bottom: 1rem;">
-        <div>
-            <p>Card format</p>
-            <pre>{{ card_format }}</pre>
+    <div v-if="sitecode_enabled">
+        <p>With {{ site_bit_count }} site bits, the site code can be range from 0 up to {{ max_sitecode_str }}, its
+            number of
+            based-10
+            digits of can be range from 0 up to {{
+                max_num_sitecode_based_10_digits }}, user choose
+            to
+            have {{ num_sitecode_based_10_digits }} digits of site bits.</p>
+        <p>With {{ card_bit_count }} card bits, the card code can be range from 0 up to {{ max_cardcode_str }}, its
+            number of based-10
+            digits can be range from 0 up to {{
+                max_num_cardcode_based_10_digits }}, user choose
+            to have {{ num_cardcode_based_10_digits }} digits of card bits.</p>
+        <p>e.g. If site code = 1 and card code = 5, the resulting formatted card string under this format will be {{ '1' + '5'.padStart(num_cardcode_based_10_digits,'0') }}</p>
+    </div>
+    <div style="display:flex; margin-bottom: 1rem; flex-direction: row;">
+        <div style="flex: 1 1 50%;">
+            <div>
+                <p>Card format</p>
+                <pre>{{ card_format }}</pre>
+            </div>
+            <div v-if="debug">
+                <p>Even parity bit mask position</p>
+                <pre>{{ even_parity_bit_mask_pos }}</pre>
+                <p>Odd Parity bit mask position</p>
+                <pre>{{ odd_parity_bit_mask_pos }}</pre>
+                <p>Even Parity Position</p>
+                <pre>{{ even_parity_pos }}</pre>
+                <p>Odd Parity Position</p>
+                <pre>{{ odd_parity_pos }}</pre>
+                <p>Card bit array is:</p>
+                <pre>{{ cardsite_bit_pos_count_map_array }}</pre>
+            </div>
         </div>
-        <div v-if="debug">
-            <p>Even parity bit mask position</p>
-            <pre>{{ even_parity_bit_mask_pos }}</pre>
-            <p>Odd Parity bit mask position</p>
-            <pre>{{ odd_parity_bit_mask_pos }}</pre>
-            <p>Even Parity Position</p>
-            <pre>{{ even_parity_pos }}</pre>
-            <p>Odd Parity Position</p>
-            <pre>{{ odd_parity_pos }}</pre>
-            <p>Card bit array is:</p>
-            <pre>{{ cardsite_bit_pos_count_map_array }}</pre>
+        <div style="flex: 2 0 70%;">
+            <p>You can also put your format and generate the design. For example you can paste the following to the
+                textare
+                below to obtain a standard open 26-bit Wiegand format:</p>
+            <pre>
+{
+    "num_fc_digit": 4,
+    "num_card_digit": 6,
+    "convertion": 1,
+    "cardlen": 26,
+    "oddparity_pos": [26, 255, 255],
+    "evenparity_pos": [1, 255, 255],
+    "cardcode": [
+        0, 1536, 1537, 1538, 1539, 1540, 1541, 1542,
+        1543, 1280, 1281, 1282, 1283, 8452, 8453, 8454, 
+        8455, 8456, 8457, 8458, 8459, 8460, 8461, 8462, 
+        8463, 0
+    ]
+}
+        </pre>
+            <textarea style="width: 90%; height: 100px" v-model="user_input_json_format"
+                @change="on_user_change_json_format"></textarea>
         </div>
-
     </div>
 </template>
 
