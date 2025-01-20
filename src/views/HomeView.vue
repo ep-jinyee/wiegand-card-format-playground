@@ -50,6 +50,8 @@ const max_sitecode_str = ref('0');
 const max_cardcode_str = ref('0');
 
 const card_format = ref({
+    num_fc_digit: 0,
+    num_card_digit: 0,
     convertion: 2,
     cardlen: num_card_bit.value,
     oddparity_pos: [],
@@ -238,10 +240,10 @@ function on_reset_pressed(e) {
     user_input_json_format.value = '';
     num_cardcode_based_10_digits.value = 0;
     num_sitecode_based_10_digits.value = 0;
-    max_num_cardcode_based_10_digits = 0;
-    max_cardcode_str = '0';
-    max_num_sitecode_based_10_digits = 0;
-    max_sitecode_str = '0';
+    max_num_cardcode_based_10_digits.value = 0;
+    max_cardcode_str.value = '0';
+    max_num_sitecode_based_10_digits.value = 0;
+    max_sitecode_str.value = '0';
     card_format.value = {
         convertion: 2,
         cardlen: num_card_bit.value,
@@ -255,8 +257,32 @@ function generate_card_format_json(e) {
 
     card_format.value.evenparity_pos = even_parity_pos.value;
     card_format.value.oddparity_pos = odd_parity_pos.value;
+
+    console.log(even_parity_bit_mask_pos)
+    for (let i = 0; i < 3; i++)
+    {   
+        if (!even_parity_pos.value[i]) {
+            card_format.value.evenparity_pos[i] = 255
+        }
+        if (!odd_parity_pos.value[i]) {
+            card_format.value.oddparity_pos[i] = 255
+        }
+    }
+
     card_format.value.cardcode = [];
     card_format.value.cardlen = card_bit_count.value;
+
+    // no site code, just CSN
+    if (card_format.value.convertion == 2) 
+    {
+        card_format.value.num_card_digit = 0,
+        card_format.value.num_fc_digit = 0
+    } else {
+        card_format.value.num_card_digit = num_cardcode_based_10_digits.value;
+        card_format.value.num_fc_digit = num_sitecode_based_10_digits.value;
+    }
+
+
     // todo :: validate first
     for (let i = 1; i <= num_card_bit.value; i++) {
         let type = 0;
@@ -356,11 +382,13 @@ function on_user_change_json_format() {
 
         if (json.oddparity_pos) {
             odd_parity_pos.value = json.oddparity_pos;
+            card_format.value.oddparity_pos = json.oddparity_pos;
             num_odd_parity.value = json.oddparity_pos.filter(a => a != 255).length
         }
 
         if (json.evenparity_pos) {
             even_parity_pos.value = json.evenparity_pos;
+            card_format.value.evenparity_pos = json.evenparity_pos;
             num_even_parity.value = json.evenparity_pos.filter(a => a != 255).length
         }
 
@@ -594,10 +622,11 @@ watch(() => card_bit_count.value, (newVal, oldVal) => {
             </div>
         </div>
         <div style="flex: 2 0 70%;">
-            <p>You can also put your format and generate the design. For example you can paste the following to the
-                textare
-                below to obtain a standard open 26-bit Wiegand format:</p>
-            <pre>
+            <p>You can also put your format and generate the design. </p>
+            <p>For example you can copy the following default settings in EdgeLPR board and paste into the textarea to visualize their format:</p>
+            <ol>
+                <li>26-bit Open Wiegand Format</li>
+                <pre>
 {
     "num_fc_digit": 4,
     "num_card_digit": 6,
@@ -612,7 +641,125 @@ watch(() => card_bit_count.value, (newVal, oldVal) => {
         8463, 0
     ]
 }
-        </pre>
+                </pre>
+                <li>32-bit - 4BYTE CSN 32BIT</li>
+                <pre>
+{
+  "num_fc_digit": 0,
+  "num_card_digit": 0,
+  "convertion": 2,
+  "cardlen": 32,
+  "oddparity_pos": [255, 255, 255],
+  "evenparity_pos": [255, 255, 255],
+  "cardcode": [
+    256, 257, 258, 259, 260, 261, 262, 263, 
+    264, 265, 266, 267, 268, 269, 270, 271,
+    272, 273, 274, 275, 276, 277, 278, 279,
+    280, 281, 282, 283, 284, 285, 286, 287
+  ]
+}
+                </pre>
+                <li>HID STANDARD 34BIT - (H10306)</li>
+                <pre>
+{
+  "num_fc_digit": 5,
+  "num_card_digit": 5,
+  "convertion": 1,
+  "cardlen": 34,
+  "oddparity_pos": [34,255,255],
+  "evenparity_pos": [1,255,255],
+  "cardcode": [ 
+    0, 1536, 1537, 1538, 1539, 1540, 1541, 1542, 
+    1543, 1544, 1545, 1546, 1547, 1548, 1549, 1550,
+    1551, 8448, 8449, 8450, 8451, 8452, 8453, 8454,
+    8455, 8456, 8457, 8458, 8459, 8460, 8461, 8462,
+    8463, 0
+  ]
+}
+                </pre>
+                <li>HID 35BIT CORPORATE 1000</li>
+                <pre>
+{
+  "convertion": 1,
+  "cardlen": 35,
+  "oddparity_pos": [35,1,255],
+  "evenparity_pos": [2,255,255],
+  "cardcode": [
+    0, 8192, 9728, 17921, 8706, 9731, 17924, 8709,
+    9734, 17927, 8712, 9737, 17930, 8715, 9472, 17665,
+    8450, 9475, 17668, 8453, 9478, 17671, 8456, 9481,
+    17674, 8459, 9484, 17677, 8462, 9487, 17680, 8465,
+    9490, 17683, 16384
+  ],
+  "num_card_digit": 7,
+  "num_fc_digit": 4
+}
+                </pre>
+                <li>HID 37 BIT (H10302)</li>
+                <pre>
+{
+  "convertion": 2,
+  "cardlen": 37,
+  "oddparity_pos": [37, 255, 255],
+  "evenparity_pos": [1, 255, 255],
+  "cardcode": [
+    0, 1280, 1281, 1282, 1283, 1284, 1285, 1286,
+    1287, 1288, 1289, 1290, 1291, 1292, 1293, 1294, 
+    1295, 1296, 9489, 8466, 8467, 8468, 8469, 8470,
+    8471, 8472, 8473, 8474, 8475, 8476, 8477, 8478,
+    8479, 8480, 8481, 8482, 0],
+  "num_card_digit": 0,
+  "num_fc_digit": 0
+}
+                </pre>
+                <li>64 BIT CSN</li>
+                <pre>
+{
+  "convertion": 2,
+  "cardlen": 64,
+  "oddparity_pos": [255,255,255],
+  "evenparity_pos": [255,255,255],
+  "cardcode": [
+    256,257,258,259,260,261,262,263,
+    264,265,266,267,268,269,270,271,
+    272,273,274,275,276,277,278,279,
+    280,281,282,283,284,285,286,287,
+    288,289,290,291,292,293,294,295,
+    296,297,298,299,300,301,302,303,
+    304,305,306,307,308,309,310,311,
+    312,313,314,315,316,317,318,319
+  ],
+  "num_card_digit": 0,
+  "num_fc_digit": 0
+}
+                </pre>
+                <li>92 BIT CSN</li>
+                <pre>
+{
+  "convertion": 2,
+  "cardlen": 92,
+  "oddparity_pos": [255, 255, 255],
+  "evenparity_pos": [255, 255, 255],
+  "cardcode": [
+    256,257,258,259,260,261,262,263,
+    264,265,266,267,268,269,270,271,
+    272,273,274,275,276,277,278,279,
+    280,281,282,283,284,285,286,287,
+    288,289,290,291,292,293,294,295,
+    296,297,298,299,300,301,302,303,
+    304,305,306,307,308,309,310,311,
+    312,313,314,315,316,317,318,319,
+    320,321,322,323,324,325,326,327,
+    328,329,330,331,332,333,334,335,
+    336,337,338,339,340,341,342,343,
+    344,345,346,347
+  ],
+  "num_card_digit": 0,
+  "num_fc_digit": 0
+}
+                </pre>
+            </ol>
+
             <textarea style="width: 90%; height: 100px" v-model="user_input_json_format"
                 @change="on_user_change_json_format"></textarea>
         </div>
