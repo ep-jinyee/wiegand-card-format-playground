@@ -210,12 +210,14 @@ function add_remove_even_parity_bit(e, i, j) {
 }
 
 function add_remove_odd_parity_bit(e, i, j) {
+    console.log("What is i , j ", i, j)
     if (odd_parity_bit_mask_pos.value[j - 1].includes(i)) {
         odd_parity_bit_mask_pos.value[j - 1] = [...odd_parity_bit_mask_pos.value[j - 1].filter(k => k != i)]
         return;
     }
 
     if (odd_parity_pos.value[j - 1] == i) {
+        console.log("ANBU")
         // odd_parity_bit_mask_pos.value[j - 1] = [...odd_parity_bit_mask_pos.value[j - 1].filter(k => k != i)]
         return;
     }
@@ -287,18 +289,32 @@ function generate_card_format_json(e) {
     for (let i = 1; i <= num_card_bit.value; i++) {
         let type = 0;
         let pos = 0;
-        let parityIndex = even_parity_bit_mask_pos.value.findIndex(a => a.includes(i));
-        if (parityIndex != -1) {
-            if (parityIndex == 0) type += E_WIEG_BIT_EVEN_PAR_MSK_1;
-            else if (parityIndex == 1) type += E_WIEG_BIT_EVEN_PAR_MSK_2;
-            else if (parityIndex == 2) type += E_WIEG_BIT_EVEN_PAR_MSK_3;
+        for (let j = 1; j <= 3; j++) {
+            if (even_parity_bit_mask_pos.value[j - 1].includes(i)) {
+                if (j == 1) type += E_WIEG_BIT_EVEN_PAR_MSK_1;
+                if (j == 2) type += E_WIEG_BIT_EVEN_PAR_MSK_2;
+                if (j == 3) type += E_WIEG_BIT_EVEN_PAR_MSK_3;
+            }
+
+            if (odd_parity_bit_mask_pos.value[j - 1].includes(i)) {
+                if (j == 1) type += E_WIEG_BIT_ODD_PAR_MSK_1;
+                if (j == 2) type += E_WIEG_BIT_ODD_PAR_MSK_2;
+                if (j == 3) type += E_WIEG_BIT_ODD_PAR_MSK_3;
+            }
         }
-        parityIndex = odd_parity_bit_mask_pos.value.findIndex(a => a.includes(i));
-        if (parityIndex != -1) {
-            if (parityIndex == 0) type += E_WIEG_BIT_ODD_PAR_MSK_1;
-            else if (parityIndex == 1) type += E_WIEG_BIT_ODD_PAR_MSK_2;
-            else if (parityIndex == 2) type += E_WIEG_BIT_ODD_PAR_MSK_3;
-        }
+        // YOU WILL ONLY TAKE THE FIRST PARITY BIT IF YOU DO LIKE THIS BELOW
+        // let parityIndex = even_parity_bit_mask_pos.value.findIndex(a => a.includes(i));
+        // if (parityIndex != -1) {
+        //     if (parityIndex == 0) type += E_WIEG_BIT_EVEN_PAR_MSK_1;
+        //     else if (parityIndex == 1) type += E_WIEG_BIT_EVEN_PAR_MSK_2;
+        //     else if (parityIndex == 2) type += E_WIEG_BIT_EVEN_PAR_MSK_3;
+        // }
+        // parityIndex = odd_parity_bit_mask_pos.value.findIndex(a => a.includes(i));
+        // if (parityIndex != -1) {
+        //     if (parityIndex == 0) type += E_WIEG_BIT_ODD_PAR_MSK_1;
+        //     else if (parityIndex == 1) type += E_WIEG_BIT_ODD_PAR_MSK_2;
+        //     else if (parityIndex == 2) type += E_WIEG_BIT_ODD_PAR_MSK_3;
+        // }
         let card_or_site_bit = cardsite_bit_pos_count_map_array.value.find(c => c[0] == i);
         if (card_or_site_bit) {
             if (card_or_site_bit[2] == 0) { // card bit
@@ -685,12 +701,11 @@ watch(() => card_bit_count.value, (newVal, oldVal) => {
   "oddparity_pos": [35,1,255],
   "evenparity_pos": [2,255,255],
   "cardcode": [
-    0, 8192, 9728, 17921, 8706, 9731, 17924, 8709,
-    9734, 17927, 8712, 9737, 17930, 8715, 9472, 17665,
-    8450, 9475, 17668, 8453, 9478, 17671, 8456, 9481,
-    17674, 8459, 9484, 17677, 8462, 9487, 17680, 8465,
-    9490, 17683, 16384
-  ],
+    0,24576,26112,17921,25090,26115,17924,25093,
+    26118,17927,25096,26121,17930,25099,25856,17665,
+    24834,25859,17668,24837,25862,17671,24840,25865,
+    17674,24843,25868,17677,24846,25871,17680,24849,
+    25874,17683,16384],
   "num_card_digit": 7,
   "num_fc_digit": 4
 }
