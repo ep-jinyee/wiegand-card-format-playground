@@ -412,9 +412,12 @@ function on_user_change_json_format() {
             card_format.value.cardcode = json.cardcode;
         }
 
-        // need to reverse engineer the card format and draw the card format on table
+        // to clear the existing card format
         cardsite_bit_pos_count_map_array.value = [];
+        even_parity_bit_mask_pos.value = [[],[],[]];
+        odd_parity_bit_mask_pos.value = [[],[],[]];
 
+        // need to reverse engineer the card format and draw the card format on table
         for (let i = 0; i < json.cardcode.length; i++) {
             let type = json.cardcode[i] >> 8;
             let pos = json.cardcode[i] & 0xff;
